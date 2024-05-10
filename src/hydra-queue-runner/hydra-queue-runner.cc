@@ -11,10 +11,10 @@
 
 #include <nlohmann/json.hpp>
 
+#include "signals.hh"
 #include "state.hh"
 #include "hydra-build-result.hh"
 #include "store-api.hh"
-#include "remote-store.hh"
 
 #include "globals.hh"
 #include "hydra-config.hh"
@@ -926,20 +926,6 @@ void State::run(BuildID buildOne)
                 printMsg(lvlError, "cleanup thread: %s", e.what());
                 auto orphanedSteps_(orphanedSteps.lock());
                 orphanedSteps_->insert(steps.begin(), steps.end());
-            }
-        }
-    }).detach();
-
-    /* Make sure that old daemon connections are closed even when
-       we're not doing much. */
-    std::thread([&]() {
-        while (true) {
-            sleep(10);
-            try {
-                if (auto remoteStore = getDestStore().dynamic_pointer_cast<RemoteStore>())
-                    remoteStore->flushBadConnections();
-            } catch (std::exception & e) {
-                printMsg(lvlError, "connection flush thread: %s", e.what());
             }
         }
     }).detach();

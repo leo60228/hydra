@@ -2,6 +2,7 @@
 #include "hydra-config.hh"
 #include "pool.hh"
 #include "shared.hh"
+#include "signals.hh"
 
 #include <algorithm>
 #include <thread>
@@ -11,7 +12,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <boost/format.hpp>
+
 using namespace nix;
+using boost::format;
 
 typedef std::pair<std::string, std::string> JobsetName;
 
@@ -505,7 +509,7 @@ int main(int argc, char * * argv)
         parseCmdLine(argc, argv, [&](Strings::iterator & arg, const Strings::iterator & end) {
             if (*arg == "--unlock")
                 unlock = true;
-            else if (hasPrefix(*arg, "-"))
+            else if (arg->starts_with("-"))
                 return false;
             args.push_back(*arg);
             return true;

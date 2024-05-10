@@ -17,7 +17,7 @@ struct Connection : pqxx::connection
         std::string lower_prefix = "dbi:Pg:";
         std::string upper_prefix = "DBI:Pg:";
 
-        if (hasPrefix(s, lower_prefix) || hasPrefix(s, upper_prefix)) {
+        if (s.starts_with(lower_prefix) || s.starts_with(upper_prefix)) {
             return concatStringsSep(" ", tokenizeString<Strings>(std::string(s, lower_prefix.size()), ";"));
         }
 

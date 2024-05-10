@@ -93,11 +93,11 @@ static void openConnection(::Machine::ptr machine, Path tmpDir, int stderrFD, SS
         throw SysError("cannot start %s", pgmName);
     });
 
-    to.readSide = -1;
-    from.writeSide = -1;
+    to.readSide.reset();
+    from.writeSide.reset();
 
-    child.in = to.writeSide.release();
-    child.out = from.readSide.release();
+    child.in = AutoCloseFD{to.writeSide.release()};
+    child.out = AutoCloseFD{from.readSide.release()};
 
     // XXX: determine the actual max value we can use from /proc.
     int pipesize = 1024 * 1024;
@@ -186,7 +186,7 @@ static std::pair<Path, AutoCloseFD> openLogFile(const std::string & logDir, cons
 
     createDirs(dirOf(logFile));
 
-    AutoCloseFD logFD = open(logFile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0666);
+    AutoCloseFD logFD{open(logFile.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0666)};
     if (!logFD) throw SysError("creating log file ‘%s’", logFile);
 
     return {std::move(logFile), std::move(logFD)};
@@ -588,7 +588,7 @@ void State::buildRemote(ref<Store> destStore,
         if (ftruncate(logFD.get(), 0) == -1)
             throw SysError("truncating log file ‘%s’", result.logFile);
 
-        logFD = -1;
+        logFD.reset();
 
         /* Do the build. */
         printMsg(lvlDebug, "building ‘%s’ on ‘%s’",
@@ -684,7 +684,7 @@ void State::buildRemote(ref<Store> destStore,
         }
 
         /* Shut down the connection. */
-        child.in = -1;
+        child.in.reset();
         child.sshPid.wait();
 
     } catch (Error & e) {

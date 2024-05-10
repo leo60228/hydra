@@ -8,6 +8,7 @@
 #include "eval.hh"
 #include "eval-inline.hh"
 #include "eval-settings.hh"
+#include "signals.hh"
 #include "util.hh"
 #include "get-drvs.hh"
 #include "globals.hh"
@@ -160,7 +161,7 @@ static void worker(
 
         auto s = readLine(from.get());
         if (s == "exit") break;
-        if (!hasPrefix(s, "do ")) abort();
+        if (!s.starts_with("do ")) abort();
         std::string attrPath(s, 3);
 
         debug("worker process %d at '%s'", getpid(), attrPath);
@@ -183,7 +184,7 @@ static void worker(
                     !experimentalFeatureSettings.isEnabled(Xp::CaDerivations));
 
                 if (drv->querySystem() == "unknown")
-                    throw EvalError("derivation must have a 'system' attribute");
+                    state.error<EvalError>("derivation must have a 'system' attribute").debugThrow();
 
                 auto drvPath = state.store->printStorePath(drv->requireDrvPath());
 
@@ -206,7 +207,7 @@ static void worker(
                 if (a && state.forceBool(*a->value, a->pos, "while evaluating the `_hydraAggregate` attribute")) {
                     auto a = v->attrs->get(state.symbols.create("constituents"));
                     if (!a)
-                        throw EvalError("derivation must have a ‘constituents’ attribute");
+                        state.error<EvalError>("derivation must have a ‘constituents’ attribute").debugThrow();
 
                     NixStringContext context;
                     state.coerceToString(a->pos, *a->value, context, "while evaluating the `constituents` attribute", true, false);
@@ -272,7 +273,7 @@ static void worker(
             else if (v->type() == nNull)
                 ;
 
-            else throw TypeError("attribute '%s' is %s, which is not supported", attrPath, showType(*v));
+            else state.error<TypeError>("attribute '%s' is %s, which is not supported", attrPath, showType(*v)).debugThrow();
 
         } catch (EvalError & e) {
             auto msg = e.msg();
@@ -379,8 +380,7 @@ int main(int argc, char * * argv)
                                     // what's shown in the Hydra UI.
                                     writeLine(to->get(), "restart");
                                 }
-                            },
-                            ProcessOptions { .allowVfork = false });
+                            });
                         from = std::move(fromPipe.readSide);
                         to = std::move(toPipe.writeSide);
                         debug("created worker process %d", pid);
@@ -531,7 +531,7 @@ int main(int argc, char * * argv)
 
                 if (brokenJobs.empty()) {
                     std::string drvName(drvPath.name());
-                    assert(hasSuffix(drvName, drvExtension));
+                    assert(drvName.ends_with(drvExtension));
                     drvName.resize(drvName.size() - drvExtension.size());
 
                     auto hashModulo = hashDerivationModulo(*store, drv, true);
