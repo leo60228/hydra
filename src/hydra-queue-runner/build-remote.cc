@@ -9,8 +9,6 @@
 #include "path.hh"
 #include "serve-protocol.hh"
 #include "state.hh"
-#include "current-process.hh"
-#include "processes.hh"
 #include "util.hh"
 #include "serve-protocol.hh"
 #include "serve-protocol-impl.hh"

@@ -8,8 +8,6 @@
 #include "eval.hh"
 #include "eval-inline.hh"
 #include "eval-settings.hh"
-#include "signals.hh"
-#include "terminal.hh"
 #include "util.hh"
 #include "get-drvs.hh"
 #include "globals.hh"
@@ -97,7 +95,7 @@ static std::string queryMetaStrings(EvalState & state, DrvInfo & drv, const std:
     rec = [&](Value & v) {
         state.forceValue(v, noPos);
         if (v.type() == nString)
-            res.emplace_back(v.string_view());
+            res.push_back(v.string.s);
         else if (v.isList())
             for (unsigned int n = 0; n < v.listSize(); ++n)
                 rec(*v.listElems()[n]);
@@ -228,7 +226,7 @@ static void worker(
                         auto v = a->value->listElems()[n];
                         state.forceValue(*v, noPos);
                         if (v->type() == nString)
-                            job["namedConstituents"].push_back(v->string_view());
+                            job["namedConstituents"].push_back(v->str());
                     }
                 }
 

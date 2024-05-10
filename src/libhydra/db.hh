@@ -2,7 +2,6 @@
 
 #include <pqxx/pqxx>
 
-#include "environment-variables.hh"
 #include "util.hh"
 
 

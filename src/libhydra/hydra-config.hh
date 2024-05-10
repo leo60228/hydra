@@ -2,7 +2,6 @@
 
 #include <map>
 
-#include "file-system.hh"
 #include "util.hh"
 
 struct HydraConfig

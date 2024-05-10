@@ -2,7 +2,6 @@
 #include "hydra-config.hh"
 #include "pool.hh"
 #include "shared.hh"
-#include "signals.hh"
 
 #include <algorithm>
 #include <thread>
